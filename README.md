@@ -1,77 +1,164 @@
 # Hotel Offer Orchestrator
 
-Aggregates overlapping hotel offers from two mocked suppliers, de-duplicates hotels by name, keeps the **cheapest offer per hotel**, stores the result in **Redis**, and filters by price range **inside Redis**. A **Temporal** workflow orchestrates the comparison. A **React** frontend lets you search, see live health and simulate supplier outages.
+Hotel Offer Orchestrator combines offers from two mocked hotel suppliers, removes duplicate hotels, keeps the **cheapest offer for each hotel**, stores the results in **Redis**, and supports price filtering in Redis. A **Temporal** workflow coordinates the supplier requests and processing.
 
-```
+The project includes a React frontend for searching hotels, viewing service health, and simulating supplier outages.
+
+## Project structure
+
+```text
 .
-├── backend/               Node.js + TypeScript + Express + Temporal + Redis (SOLID, ports and adapters)
-│   ├── src/ tests/ postman/
-│   ├── Dockerfile
-│   └── README.md          full backend docs: class diagrams, SOLID mapping, API, Redis model
-├── frontend/              React + TypeScript + Vite, served by nginx in Docker
-│   ├── src/ tests/
-│   ├── Dockerfile
-│   └── README.md          frontend docs
-└── docker-compose.yml     runs everything: redis, temporal, api, worker, frontend
+├── backend/               Node.js + TypeScript + Express + Temporal + Redis
+│   ├── src/
+│   ├── tests/
+│   └── README.md          Backend architecture and API documentation
+├── frontend/              React + TypeScript + Vite
+│   ├── src/
+│   └── README.md          Frontend documentation
+└── docker-compose.yml     Runs Redis, Temporal, the API, worker, and frontend
 ```
 
-## Quick start
+## Run the project with Docker
+
+### Step 1: Install the prerequisites
+
+Install the following software:
+
+- [Git](https://git-scm.com/downloads)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
+Make sure Docker Desktop is running before starting the application.
+
+### Step 2: Clone the repository
+
+Replace `<repository-url>` with the URL of this GitHub repository:
+
+```bash
+git clone <repository-url>
+cd hotel-offer-orchestrator
+```
+
+### Step 3: Build and start the application
+
+Run this command from the project root, where `docker-compose.yml` is located:
 
 ```bash
 docker compose up --build
 ```
 
-Wait about 30 to 60 seconds on the first start (Temporal boots; the API and worker retry until it is ready).
+The first startup can take 30–60 seconds while Docker builds the images and Temporal starts. The API and worker retry their connections while the infrastructure becomes ready.
 
-| What | URL |
-|---|---|
-| **Frontend (UI)** | http://localhost:8080 |
-| API | http://localhost:3000/api/hotels?city=delhi |
-| Health | http://localhost:3000/health |
-| Temporal Web UI (watch workflows) | http://localhost:8233 |
+### Step 4: Open the application
+
+Once the containers are running, open the frontend:
+
+**http://localhost:8080**
+
+Available services:
+
+| Service | URL | Description |
+|---|---|---|
+| Frontend | http://localhost:8080 | Hotel search interface |
+| API | http://localhost:3000 | REST API |
+| Health | http://localhost:3000/health | API, supplier, and Redis status |
+| Temporal Web UI | http://localhost:8233 | View Temporal workflows |
+| Redis | localhost:6379 | Hotel data store |
+
+### Step 5: Try the API
+
+Search for hotels in a city:
 
 ```bash
 curl "http://localhost:3000/api/hotels?city=delhi"
+```
+
+Search with a price range:
+
+```bash
 curl "http://localhost:3000/api/hotels?city=delhi&minPrice=5000&maxPrice=6000"
 ```
 
-Stop everything with `docker compose down`.
+Check service health:
 
-| Service | Built from | Purpose | Port |
-|---|---|---|---|
-| `frontend` | `./frontend` | UI, plus reverse proxy to the API | 8080 |
-| `api` | `./backend` | REST API + mock suppliers | 3000 |
-| `worker` | `./backend` | Temporal worker (workflow + activities) | n/a |
-| `temporal` | image | Temporal dev server | 7233 / 8233 |
-| `redis` | image | hotel store + price index | 6379 |
+```bash
+curl "http://localhost:3000/health"
+```
+
+### Step 6: Stop the application
+
+Press `Ctrl+C` in the terminal running Docker Compose, then run:
+
+```bash
+docker compose down
+```
+
+To stop the containers and remove their volumes:
+
+```bash
+docker compose down -v
+```
+
+## Run locally without Docker for the applications
+
+Docker is still required for Redis and Temporal. Start only those infrastructure services first:
+
+```bash
+docker compose up redis temporal
+```
+
+Open three additional terminals from the project root.
+
+### Terminal 1: Start the backend API
+
+```bash
+cd backend
+npm install
+npm run dev:api
+```
+
+### Terminal 2: Start the Temporal worker
+
+```bash
+cd backend
+npm run dev:worker
+```
+
+### Terminal 3: Start the frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open the frontend development server at **http://localhost:5173**.
 
 ## How it works
 
-1. The UI (or any client) calls `GET /api/hotels?city=delhi[&minPrice=&maxPrice=]`.
-2. The API starts a Temporal workflow. The workflow calls Supplier A and B **in parallel**, picks the **cheapest offer per hotel** (names matched case-insensitively), **saves the list in Redis** and, if a range was given, lets **Redis filter by price** (sorted set + `ZRANGEBYSCORE`).
-3. One supplier down still returns the other's hotels; both down returns `502`.
-4. `GET /health` reports Supplier A, Supplier B and Redis.
+1. The frontend or another client calls `GET /api/hotels?city=delhi`.
+2. The API starts a Temporal workflow.
+3. The workflow calls Supplier A and Supplier B in parallel.
+4. Offers are matched by hotel name, case-insensitively.
+5. The cheapest offer for each hotel is saved in Redis.
+6. If a price range is provided, Redis filters the results using its sorted-set price index.
+7. If one supplier is unavailable, the other supplier's results are returned. If both are unavailable, the API returns `502`.
 
-Details, class diagrams (LLD), SOLID mapping and extension guides: [backend/README.md](backend/README.md). UI details: [frontend/README.md](frontend/README.md).
+## Services
 
-## Testing
+| Service | Built from | Purpose | Port |
+|---|---|---|---|
+| `frontend` | `./frontend` | React UI and reverse proxy to the API | 8080 |
+| `api` | `./backend` | REST API and mocked suppliers | 3000 |
+| `worker` | `./backend` | Temporal workflow and activities | - |
+| `temporal` | Docker image | Temporal development server | 7233, 8233 |
+| `redis` | Docker image | Hotel store and price index | 6379 |
 
-| Layer | Command | What it covers |
-|---|---|---|
-| Backend unit tests | `cd backend && npm install && npm test` | 31 tests with fakes for every port (no Redis or Temporal needed) |
-| Frontend unit tests | `cd frontend && npm install && npm test` | 17 tests: API client, validation, sorting, formatting |
-| API end to end | import `backend/postman/hotel-offer-orchestrator.postman_collection.json` (or `npx newman run <file>`) | overlaps, price filters, no-result city, validation, health, supplier outage |
-| Manual, in the UI | open http://localhost:8080 | see the table in [frontend/README.md](frontend/README.md#try-these-in-the-ui) |
+## More documentation
 
-## Local development without Docker for the apps
-
-```bash
-docker compose up redis temporal      # infrastructure only
-cd backend  && npm install && npm run dev:api      # terminal 1
-cd backend  && npm run dev:worker                  # terminal 2
-cd frontend && npm install && npm run dev          # terminal 3 -> http://localhost:5173
-```
+- [Backend documentation](backend/README.md): architecture, API reference, Redis model, and configuration
+- [Frontend documentation](frontend/README.md): UI structure and frontend details
 
 ## Requirements
 
-Docker with Compose v2, or (for local development) Node.js 20+.
+- Docker Desktop with Docker Compose v2
+- Node.js 20 or newer for local application development
