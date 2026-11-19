@@ -1,0 +1,3 @@
+export const HOTEL_WORKFLOW_NAME = 'hotelOfferWorkflow';
+export const ALL_SUPPLIERS_UNAVAILABLE = 'ALL_SUPPLIERS_UNAVAILABLE';
+export const UNKNOWN_SUPPLIER = 'UNKNOWN_SUPPLIER';

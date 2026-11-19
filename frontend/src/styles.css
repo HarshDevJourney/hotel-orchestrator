@@ -1,0 +1,72 @@
+:root {
+  --bg: #f6f7f9; --card: #ffffff; --text: #1c1f26; --muted: #667085; --border: #e4e7ec;
+  --accent: #4f46e5; --accent-text: #ffffff;
+  --ok: #067647; --ok-bg: #dcfae6; --warn: #b54708; --warn-bg: #fef0c7; --bad: #b42318; --bad-bg: #fee4e2;
+  --a: #1d4ed8; --a-bg: #dbeafe; --b: #7e22ce; --b-bg: #f3e8ff;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115; --card: #181b21; --text: #e8eaed; --muted: #9aa3b2; --border: #2b303a;
+    --accent: #818cf8; --accent-text: #0f1115;
+    --ok: #75e0a7; --ok-bg: #0b3d2a; --warn: #fec84b; --warn-bg: #4a2f05; --bad: #fda29b; --bad-bg: #4a1410;
+    --a: #93c5fd; --a-bg: #172554; --b: #d8b4fe; --b-bg: #3b0764;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+.container { max-width: 880px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 16px; }
+h1 { margin: 0 0 4px; font-size: 24px; }
+.muted { color: var(--muted); margin: 0; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+
+.health-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pill { padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 13px; }
+.pill-ok { background: var(--ok-bg); color: var(--ok); }
+.pill-degraded { background: var(--warn-bg); color: var(--warn); }
+.pill-down { background: var(--bad-bg); color: var(--bad); }
+.pill-unknown { background: var(--border); color: var(--muted); }
+.deps { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.dep { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+.dep span:last-child { color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.dep-down .dot { background: var(--bad); }
+
+.search-form { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 12px; align-items: start; }
+.field { display: grid; gap: 4px; }
+label { font-size: 13px; font-weight: 600; }
+input { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); width: 100%; }
+input:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[aria-invalid='true'] { border-color: var(--bad); }
+.field-error { color: var(--bad); font-size: 12px; }
+.actions { display: flex; gap: 8px; align-self: end; }
+
+button { font: inherit; border-radius: 8px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+button.danger { border-color: var(--bad); color: var(--bad); }
+button.ghost { background: transparent; }
+button.small { padding: 4px 10px; font-size: 13px; }
+
+.summary { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th.num, td.num { text-align: right; }
+button.sort { border: 0; background: transparent; padding: 0; font-weight: 600; color: var(--muted); }
+td.name { font-weight: 600; }
+td.price { font-variant-numeric: tabular-nums; font-weight: 600; }
+.badge { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--border); }
+.supplier-a { background: var(--a-bg); color: var(--a); }
+.supplier-b { background: var(--b-bg); color: var(--b); }
+.alert { background: var(--bad-bg); color: var(--bad); padding: 12px; border-radius: 8px; }
+
+.demo summary { cursor: pointer; font-weight: 600; }
+.demo p { margin: 8px 0; }
+.demo-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+@media (max-width: 640px) {
+  .search-form { grid-template-columns: 1fr; }
+  .actions { align-self: stretch; }
+  .actions button { flex: 1; }
+}
