@@ -10,7 +10,6 @@ The project includes a React frontend for searching hotels, viewing service heal
 .
 ├── backend/               Node.js + TypeScript + Express + Temporal + Redis
 │   ├── src/
-│   ├── tests/
 │   └── README.md          Backend architecture and API documentation
 ├── frontend/              React + TypeScript + Vite
 │   ├── src/
@@ -97,41 +96,6 @@ To stop the containers and remove their volumes:
 ```bash
 docker compose down -v
 ```
-
-## Run locally without Docker for the applications
-
-Docker is still required for Redis and Temporal. Start only those infrastructure services first:
-
-```bash
-docker compose up redis temporal
-```
-
-Open three additional terminals from the project root.
-
-### Terminal 1: Start the backend API
-
-```bash
-cd backend
-npm install
-npm run dev:api
-```
-
-### Terminal 2: Start the Temporal worker
-
-```bash
-cd backend
-npm run dev:worker
-```
-
-### Terminal 3: Start the frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open the frontend development server at **http://localhost:5173**.
 
 ## How it works
 
